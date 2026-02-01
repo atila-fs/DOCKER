@@ -1,0 +1,3 @@
+extraEnvVars:
+  - name: KAFKA_HEAP_OPTS
+    value: "-Xms768m -Xmx768m"

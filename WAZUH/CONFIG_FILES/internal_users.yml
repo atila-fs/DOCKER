@@ -1,0 +1,43 @@
+---
+_meta:
+  type: "internalusers"
+  config_version: 2
+
+admin:
+  hash: "$2y$12$zI5vN7v9YxZ9W6yCyW0gOeNnD/7hJwA9Xj0lV9KXg6pWzFzD9Jk1C"
+  reserved: true
+  backend_roles:
+    - "admin"
+  description: "Administrative user"
+
+kibanaserver:
+  hash: "$2y$12$XlxF8Ff3p1zj9VZsZhM37O5RjQbZ6Zq4A0QpVZ5Yb3EwR4K4bBkjK"
+  reserved: true
+  description: "Kibana user"
+
+logstash:
+  hash: "$2y$12$Zc7q1R0d7u0zP8DkL5iSMe1nM3Lz0sScH2v8xgqQq6tS6G7u5Jx9W"
+  reserved: false
+  backend_roles:
+    - "logstash"
+  description: "Logstash user"
+
+filebeat:
+  hash: "$2y$12$4gQJQ9H7hE6O4bH9mL7iBeQ3cS0wF3QmA1hT6JfR5uH0JpW6yUoYy"
+  reserved: false
+  backend_roles:
+    - "filebeat"
+  description: "Filebeat user"
+
+wazuh:
+  hash: "$2y$12$k7hD1oF3nH2s8vR9jQ1bUeN7yF8pM4sD3eH5zB9kL2pR6wX0jS9P2"
+  reserved: false
+  backend_roles:
+    - "wazuh"
+  description: "Wazuh app user"
+
+# OBS 
+# CRIAR ARQUIVO NO PATH:/opt/wazuh/config/wazuh_indexer/internal_users.yml
+# OU
+# CRIAR ARQUIVO NO PATH:/opt/wazuh/config/opensearch-security/internal_users.yml
+# DEPENDE DA CONFIGURAÇÂO

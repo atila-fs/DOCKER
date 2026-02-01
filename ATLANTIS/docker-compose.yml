@@ -1,0 +1,22 @@
+services:
+  atlantis:
+    image: atlantis-custom
+    container_name: atlantis
+    restart: unless-stopped
+    ports:
+      - "4141:4141"
+    environment:
+      ATLANTIS_REPO_ALLOWLIST: "gitea.safeweb.com.br/Ops_de_TI/TERRAFORM"
+      ATLANTIS_PORT: "4141"
+      ATLANTIS_LOG_LEVEL: "info"
+
+      ATLANTIS_GITEA_USER: "atlantis"
+      ATLANTIS_GITEA_TOKEN: "${ATLANTIS_GITEA_TOKEN}"
+      ATLANTIS_GITEA_BASE_URL: "https://gitea.safeweb.com.br"
+      ATLANTIS_GITEA_SKIP_SSL_VERIFY: "true"
+
+    command: ["server", "--config=/atlantis/repos.yaml"]
+
+    volumes:
+      - ./data:/home/atlantis/.atlantis
+      - ./repos.yaml:/atlantis/repos.yaml:ro

@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opensearch
+  namespace: opensearch
+  labels:
+    app: opensearch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opensearch
+  template:
+    metadata:
+      labels:
+        app: opensearch
+    spec:
+      containers:
+      - name: opensearch
+        image: opensearchproject/opensearch:2.5.0
+        ports:
+        - containerPort: 9200
+          name: http
+        - containerPort: 9600
+          name: metrics
+        env:
+        - name: discovery.type
+          value: single-node
+        - name: OPENSEARCH_JAVA_OPTS
+          value: "-Xms512m -Xmx512m"
+        - name: plugins.security.ssl.http.enabled
+          value: "true"
+        - name: plugins.security.ssl.http.pemcert_filepath
+          value: certs/tls.crt
+        - name: plugins.security.ssl.http.pemkey_filepath
+          value: certs/tls.key
+        volumeMounts:
+        - name: data
+          mountPath: /usr/share/opensearch/data
+        - name: tls-certs
+          mountPath: /usr/share/opensearch/config/certs
+          readOnly: true
+      volumes:
+      - name: data
+        emptyDir: {}
+      - name: tls-certs
+        secret:
+          secretName: opensearch-tls-secret

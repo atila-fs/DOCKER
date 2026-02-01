@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-connect
+  namespace: kafka-connect
+spec:
+  template:
+    spec:
+      volumes:
+        - name: plugins
+          hostPath:
+            path: /opt/k3s/services/kafka-connect/connectores
+            type: DirectoryOrCreate
+      containers:
+        - name: kafka-connect
+          env:
+            - name: CONNECT_PLUGIN_PATH
+              value: "/opt/plugins,/usr/share/java"
+          volumeMounts:
+            - name: plugins
+              mountPath: /opt/plugins

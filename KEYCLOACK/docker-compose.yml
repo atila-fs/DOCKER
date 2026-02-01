@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.2
+    container_name: keycloak
+    command:
+      - start-dev
+      - --hostname=keycloak.<valid_domain>
+      - --hostname-admin-url=https://keycloak.<valid_domain>
+      - --hostname-strict=false
+      - --http-enabled=true
+      - --http-relative-path=/
+      - --proxy=edge
+      - --proxy-headers=xforwarded
+    ports:
+      - "8080:8080"
+    environment:
+      - TZ=America/Argentina/Buenos_Aires
+      - KEYCLOAK_ADMIN=[USERNAME]
+      - KEYCLOAK_ADMIN_PASSWORD=[PASSWORD]
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+      - /usr/share/zoneinfo/:/usr/share/zoneinfo/
+    restart: unless-stopped
+
+volumes:
+  keycloak_data:

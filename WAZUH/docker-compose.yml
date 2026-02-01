@@ -1,0 +1,119 @@
+version: "3.7"
+
+services:
+  wazuh.manager:
+    image: wazuh/wazuh-manager:4.12.0
+    hostname: wazuh.manager
+    restart: always
+    ulimits:
+      memlock: { soft: -1, hard: -1 }
+      nofile:  { soft: 655360, hard: 655360 }
+    ports:
+      - "11514:1514"
+      - "11515:1515"
+      - "514:514/udp"
+      - "55000:55000"
+    environment:
+      # Credenciais do Indexer (OpenSearch)
+      - INDEXER_URL=https://wazuh.indexer:9400
+      - INDEXER_USERNAME=admin
+      - INDEXER_PASSWORD=admin
+      # Configurações SSL do Filebeat para o Indexer
+      - FILEBEAT_SSL_VERIFICATION_MODE=full
+      - SSL_CERTIFICATE_AUTHORITIES=/etc/ssl/root-ca.pem
+      - SSL_CERTIFICATE=/etc/ssl/filebeat.pem
+      - SSL_KEY=/etc/ssl/filebeat.key
+      # Credenciais da API do Wazuh
+      - API_USERNAME=wazuh-wui
+      - API_PASSWORD=MyS3cr37P450r.*-
+    volumes:
+      # Mapeamentos Bind de Configuração (etc/ossec.conf, etc.)
+      - /opt/wazuh/config/wazuh_etc:/var/ossec/etc
+      - /opt/wazuh/config/wazuh_api_configuration:/var/ossec/api/configuration
+      - /opt/wazuh/config/wazuh_integrations:/var/ossec/integrations
+      - /opt/wazuh/config/wazuh_active_response:/var/ossec/active-response/bin
+      - /opt/wazuh/config/wazuh_agentless:/var/ossec/agentless
+      - /opt/wazuh/config/wazuh_wodles:/var/ossec/wodles
+      # Mapeamentos Bind de Dados (Logs e Queue) - Opcional, mas útil para debug
+      - /opt/wazuh/config/wazuh_logs:/var/ossec/logs
+      - /opt/wazuh/config/wazuh_queue:/var/ossec/queue
+      - /opt/wazuh/config/wazuh_var_multigroups:/var/ossec/var/multigroups
+      # Mapeamentos Bind de Certificados
+      - /opt/wazuh/config/wazuh_indexer_ssl_certs/root-ca-manager.pem:/etc/ssl/root-ca.pem
+      - /opt/wazuh/config/wazuh_indexer_ssl_certs/wazuh.manager.pem:/etc/ssl/filebeat.pem
+      - /opt/wazuh/config/wazuh_indexer_ssl_certs/wazuh.manager-key.pem:/etc/ssl/filebeat.key
+      # Volumes Nomeados para dados do Filebeat
+      - filebeat_etc:/etc/filebeat
+      - filebeat_var:/var/lib/filebeat
+    depends_on:
+      - wazuh.indexer
+    networks:
+      - wazuh-net
+
+  wazuh.indexer:
+    image: wazuh/wazuh-indexer:4.12.0
+    hostname: wazuh.indexer
+    restart: always
+    ports:
+      - "9400:9400"
+    environment:
+      - OPENSEARCH_JAVA_OPTS=-Xms2g -Xmx2g
+    ulimits:
+      memlock: { soft: -1, hard: -1 }
+      nofile:  { soft: 65536, hard: 65536 }
+    volumes:
+      # Mapeamento Bind de Dados do Indexer (Para evitar o problema de permissão do /nodes)
+      - /opt/wazuh/config/wazuh-indexer-data:/var/lib/wazuh-indexer
+      # Mapeamentos Bind de Certificados
+      - /opt/wazuh/config/wazuh_indexer_ssl_certs/root-ca.pem:/usr/share/wazuh-indexer/config/certs/root-ca.pem
+      - /opt/wazuh/config/wazuh_indexer_ssl_certs/wazuh.indexer-key.pem:/usr/share/wazuh-indexer/config/certs/wazuh.indexer.key
+      - /opt/wazuh/config/wazuh_indexer_ssl_certs/wazuh.indexer.pem:/usr/share/wazuh-indexer/config/certs/wazuh.indexer.pem
+      - /opt/wazuh/config/wazuh_indexer_ssl_certs/admin.pem:/usr/share/wazuh-indexer/config/certs/admin.pem
+      - /opt/wazuh/config/wazuh_indexer_ssl_certs/admin-key.pem:/usr/share/wazuh-indexer/config/certs/admin-key.pem
+      # Mapeamentos Bind de Configuração
+      - /opt/wazuh/config/wazuh_indexer/wazuh.indexer.yml:/usr/share/wazuh-indexer/opensearch.yml
+      - /opt/wazuh/config/opensearch-security:/usr/share/wazuh-indexer/opensearch-security
+    healthcheck:
+      test: ["CMD-SHELL", "curl -XGET -k -u admin:admin 'https://localhost:9400/_cluster/health?wait_for_status=yellow&timeout=50s' | grep -q '\"status\":\"yellow\"\\|'\"status\":\"green\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - wazuh-net
+
+  wazuh.dashboard:
+    image: wazuh/wazuh-dashboard:4.12.0
+    hostname: wazuh.dashboard
+    restart: always
+    ports:
+      - "127.0.0.1:5602:5601"
+    environment:
+      - INDEXER_USERNAME=admin
+      - INDEXER_PASSWORD=admin
+      - WAZUH_API_URL=https://wazuh.manager
+      - DASHBOARD_USERNAME=kibanaserver
+      - DASHBOARD_PASSWORD=kibanaserver
+      - API_USERNAME=wazuh-wui
+      - API_PASSWORD=MyS3cr37P450r.*-
+    volumes:
+      # Mapeamentos Bind de Configuração
+      - /opt/wazuh/config/wazuh_dashboard/opensearch_dashboards.yml:/usr/share/wazuh-dashboard/config/opensearch_dashboards.yml
+      - /opt/wazuh/config/wazuh_dashboard/wazuh.yml:/usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
+      - /opt/wazuh/config/wazuh-dashboard-config:/usr/share/wazuh-dashboard/data/wazuh/config
+      - /opt/wazuh/config/wazuh-dashboard-custom:/usr/share/wazuh-dashboard/plugins/wazuh/public/assets/custom
+      - /opt/wazuh/config/wazuh_dashboard_ssl/server.key:/etc/ssl/server.key
+      - /opt/wazuh/config/wazuh_dashboard_ssl/server.crt:/etc/ssl/server.crt
+      - /opt/wazuh/config/wazuh_indexer_ssl_certs/root-ca.pem:/usr/share/wazuh-dashboard/config/root-ca.pem
+    depends_on:
+      - wazuh.indexer
+      - wazuh.manager
+    networks:
+      - wazuh-net
+
+networks:
+  wazuh-net:
+    driver: bridge
+
+volumes:
+  filebeat_etc:
+  filebeat_var:

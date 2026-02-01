@@ -1,0 +1,28 @@
+cluster.name: wazuh-cluster
+node.name: node-1
+path.data: /var/lib/wazuh-indexer
+network.host: 0.0.0.0
+http.port: 9400
+
+discovery.type: single-node
+
+plugins.security.disabled: false
+
+plugins.security.ssl.transport.enabled: true
+plugins.security.ssl.transport.pemcert_filepath: /usr/share/wazuh-indexer/config/certs/wazuh.indexer.pem
+plugins.security.ssl.transport.pemkey_filepath:   /usr/share/wazuh-indexer/config/certs/wazuh.indexer.key
+plugins.security.ssl.transport.pemtrustedcas_filepath: /usr/share/wazuh-indexer/config/certs/root-ca.pem
+
+plugins.security.ssl.http.enabled: true
+plugins.security.ssl.http.pemcert_filepath: /usr/share/wazuh-indexer/config/certs/wazuh.indexer.pem
+plugins.security.ssl.http.pemkey_filepath:   /usr/share/wazuh-indexer/config/certs/wazuh.indexer.key
+plugins.security.ssl.http.pemtrustedcas_filepath: /usr/share/wazuh-indexer/config/certs/root-ca.pem
+
+plugins.security.allow_default_init_securityindex: true
+plugins.security.restapi.roles_enabled: ["all_access","security_rest_api_access"]
+
+plugins.security.authcz.admin_dn:
+  - "CN=admin"
+
+# OBS 
+# CRIAR ARQUIVO NO PATH:/opt/wazuh/config/wazuh_indexer/wazuh.indexer.yml

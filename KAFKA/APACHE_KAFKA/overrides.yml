@@ -1,0 +1,12 @@
+controller:
+  overrideConfiguration:
+    process.roles: controller,broker
+
+    listeners: PLAINTEXT://:9092,CONTROLLER://:9093
+    listener.security.protocol.map: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+    inter.broker.listener.name: PLAINTEXT
+    controller.listener.names: CONTROLLER
+
+    sasl.enabled.mechanisms:
+    sasl.mechanism.controller.protocol:
+    sasl.mechanism.inter.broker.protocol:

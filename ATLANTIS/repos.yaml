@@ -1,0 +1,14 @@
+repos:
+  - id: "Ops_de_TI/TERRAFORM"
+    branch: main
+    workflow: terraform
+
+workflows:
+  terraform:
+    plan:
+      steps:
+        - init
+        - plan
+    apply:
+      steps:
+        - apply

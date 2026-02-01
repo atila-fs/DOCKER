@@ -1,0 +1,16 @@
+livenessProbe:
+  enabled: false
+readinessProbe:
+  enabled: false
+customLivenessProbe:
+  tcpSocket: { port: 9093 }
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+customReadinessProbe:
+  tcpSocket: { port: 9093 }
+  initialDelaySeconds: 20
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 6

@@ -1,0 +1,10 @@
+persistence:
+  enabled: false
+
+auth:
+  enabled: false
+
+replicaCount: 3
+
+service:
+  type: ClusterIP

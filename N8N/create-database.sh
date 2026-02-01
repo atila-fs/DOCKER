@@ -1,0 +1,9 @@
+#!/bin/bash
+set -e
+sudo -u postgres psql <<EOF
+CREATE USER n8n WITH PASSWORD '[PASSWORD]';
+CREATE DATABASE n8n OWNER n8n;
+GRANT ALL PRIVILEGES ON DATABASE n8n TO n8n;
+\c n8n
+GRANT ALL PRIVILEGES ON SCHEMA public TO n8n;
+EOF

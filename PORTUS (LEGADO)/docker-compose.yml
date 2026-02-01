@@ -1,0 +1,95 @@
+version: '3.7'
+
+services:
+  db:
+    image: mariadb:10.5
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: <senha>
+      MYSQL_DATABASE: portus_production
+      MYSQL_USER: portus
+      MYSQL_PASSWORD: portuspass
+      TZ: America/Sao_Paulo
+    volumes:
+      - db-data:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+  portus:
+    image: opensuse/portus:head
+    depends_on:
+      - db
+    environment:
+      RAILS_ENV: production
+      PORTUS_KEY_PATH: /certs/privkey.pem
+      PORTUS_SECRET_KEY_BASE: 6c39f54089a35ad3a65180fc4de3d877a219ad2f5683a29bcba1b937a3fa155c4eaa60c2c3c9be07dc4c6d1d502b2b76cb1470e3b3a7e4f7e7bb8fc4e9f3aa80
+      PORTUS_MACHINE_FQDN_VALUE: registry-plurio.safewebpss.com.br
+      PORTUS_DB_HOST: db
+      PORTUS_DB_USERNAME: portus
+      PORTUS_DB_PASSWORD: portuspass
+      PORTUS_PASSWORD: <senha>
+      PORTUS_DELETE_ENABLED: "true"
+      PORTUS_USER_CREATION_ENABLED: "true"
+      TZ: America/Sao_Paulo
+    volumes:
+      - ./certs:/opt/certs:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    command: >
+      /bin/sh -c "
+        until mysql -h db -u portus -pportuspass -e 'select 1'; do
+          echo 'Aguardando o banco...'; sleep 3;
+        done;
+        /srv/Portus/bin/docker-entrypoint.sh"
+    expose:
+      - "3000" 
+    restart: always
+
+  background:
+    image: opensuse/portus:head
+    depends_on:
+      - portus
+    environment:
+      RAILS_ENV: production
+      PORTUS_SECRET_KEY_BASE: 6c39f54089a35ad3a65180fc4de3d877a219ad2f5683a29bcba1b937a3fa155c4eaa60c2c3c9be07dc4c6d1d502b2b76cb1470e3b3a7e4f7e7bb8fc4e9f3aa80
+      PORTUS_PASSWORD: <senha>
+      TZ: America/Sao_Paulo
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    command: bundle exec rake jobs:work
+    restart: always
+
+  nginx:
+    image: nginx:alpine
+    depends_on:
+      - portus
+    volumes:
+      - /opt/certs/fullchain.pem:/etc/nginx/certs/fullchain.pem:ro
+      - /opt/certs/privkey.pem:/etc/nginx/certs/portus.key:ro
+    ports:
+      - "443:443"
+    restart: always
+
+  # Descomente este bloco somente se NÃO estiver usando outro container de registry já existente
+  #
+  # registry:
+  #   image: registry:2
+  #   ports:
+  #     - 7000:7000
+  #   environment:
+  #     REGISTRY_HTTP_ADDR: 0.0.0.0:7000
+  #     REGISTRY_HTTP_TLS_CERTIFICATE: /opt/certs/fullchain.pem
+  #     REGISTRY_HTTP_TLS_KEY: /opt/certs/privkey.pem
+  #     REGISTRY_AUTH_TOKEN_REALM: https://registry-plurio.safewebpss.com.br/v2/token
+  #     REGISTRY_AUTH_TOKEN_SERVICE: container_registry
+  #     REGISTRY_AUTH_TOKEN_ISSUER: portus
+  #     REGISTRY_AUTH_TOKEN_ROOTCERTBUNDLE: /opt/certs/fullchain.pem
+  #   volumes:
+  #     - registry-data:/var/lib/registry
+  #     - ./certs:/opt/certs:ro
+  #   restart: always
+
+volumes:
+  db-data:
+  registry-data:

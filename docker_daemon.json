@@ -1,0 +1,14 @@
+{
+  "ipv6": false,
+  "dns": [
+    "[IP_ADDRESS]",
+    "[IP_ADDRESS]",
+    "[IP_ADDRESS]"
+  ],
+  "default-address-pools": [
+    {
+      "base": "[IP_ADDRESS]",
+      "size": 24
+    }
+  ]
+}

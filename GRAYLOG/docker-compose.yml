@@ -1,0 +1,54 @@
+version: "3.7"
+
+services:
+  mongodb:
+    image: mongo:6
+    restart: unless-stopped
+    environment:
+      - TZ=America/Argentina/Buenos_Aires
+    volumes:
+      - /opt/projects-ops/graylog/mongo_data:/data/db
+      - /usr/share/zoneinfo/:/usr/share/zoneinfo/
+
+  opensearch:
+    image: opensearchproject/opensearch:2.13.0
+    restart: unless-stopped
+    environment:
+      - TZ=America/Argentina/Buenos_Aires
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
+      - DISABLE_SECURITY_PLUGIN=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+    volumes:
+      - /opt/projects-ops/graylog/os_data:/usr/share/opensearch/data
+      - /usr/share/zoneinfo/:/usr/share/zoneinfo/
+
+  graylog:
+    image: graylog/graylog:5.2
+    depends_on:
+      - mongodb
+      - opensearch
+    restart: unless-stopped
+    environment:
+      - TZ=America/Argentina/Buenos_Aires
+      - GRAYLOG_PASSWORD_SECRET=${GRAYLOG_PASSWORD_SECRET}
+      - GRAYLOG_ROOT_PASSWORD_SHA2=${GRAYLOG_ROOT_PASSWORD_SHA2}
+      - GRAYLOG_HTTP_EXTERNAL_URI=https://graylog.<valid_domain>/
+      - GRAYLOG_MONGODB_URI=mongodb://mongodb:27017/graylog
+      - GRAYLOG_ELASTICSEARCH_HOSTS=http://opensearch:9200
+      - GRAYLOG_SERVER_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9100:9000"
+      - "1514:1514/tcp"
+      - "1514:1514/udp"
+      - "12201:12201/udp"
+      - "5044:5044/tcp"
+    volumes:
+      - /opt/projects-ops/graylog/graylog_journal:/usr/share/graylog/data/journal
+      - /usr/share/zoneinfo/:/usr/share/zoneinfo/

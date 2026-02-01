@@ -1,0 +1,18 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: kafdrop-ingress
+  namespace: kafka-drop
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`<kafka_domain>`)
+      kind: Rule
+      services:
+        - name: kafdrop
+          port: 80
+      middlewares:
+        - name: kafka-drop-auth
+  tls:
+    secretName: my-tls-secret

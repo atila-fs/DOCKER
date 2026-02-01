@@ -1,0 +1,27 @@
+version: "3.7"
+services:
+  mongo:
+    image: mongo:4.4
+    volumes:
+      - mongo_data:/data/db
+
+  gaia:
+    image: gaiaapp/gaia
+    ports:
+      - "9080:8080"
+    environment:
+      - GAIA_MONGODB_URI=mongodb://mongo:27017/gaia
+      - GAIA_RUNNER_API_PASSWORD=<senha>
+
+  runner:
+    image: gaiaapp/runner
+    environment:
+      - GAIA_URL=http://gaia<valid_domain>:9080
+      - GAIA_RUNNER_API_PASSWORD=<senha>
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /opt/terraform-home:/home/gaia
+      - /opt/terraform-secrets:/secrets
+
+volumes:
+  mongo_data:
